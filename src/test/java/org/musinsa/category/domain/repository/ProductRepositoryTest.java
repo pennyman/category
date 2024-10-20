@@ -1,6 +1,7 @@
 package org.musinsa.category.domain.repository;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,14 +30,15 @@ class ProductRepositoryTest {
     @Test
     @DisplayName("카테고리별 최저가 상품 조회 테스트")
     void testFindLowestPriceByCategory() {
-        // Given
+        // given
         List<Object[]> mockResults = List.of(
                 new Object[]{"상의", "Brand1", 50000L},
                 new Object[]{"아우터", "Brand2", 80000L}
         );
-        Mockito.when(productRepository.findLowestPriceByCategory()).thenReturn(mockResults);
 
         // When
+        when(productRepository.findLowestPriceByCategory()).thenReturn(mockResults);
+
         List<Object[]> result = productRepository.findLowestPriceByCategory();
 
         // Then
@@ -59,17 +61,17 @@ class ProductRepositoryTest {
     @Test
     @DisplayName("최저 총액을 가진 브랜드 조회 테스트")
     void testFindBrandWithLowestTotalPrice() {
-        // Given
+        // given
         List<Object[]> mockResults = List.of(
                 new Object[]{"Brand1", 120000L},
                 new Object[]{"Brand2", 180000L}
         );
-        Mockito.when(productRepository.findBrandWithLowestTotalPrice()).thenReturn(mockResults);
+        // when
+        when(productRepository.findBrandWithLowestTotalPrice()).thenReturn(mockResults);
 
-        // When
         List<Object[]> result = productRepository.findBrandWithLowestTotalPrice();
 
-        // Then
+        // then
         assertNotNull(result);
         assertEquals(2, result.size());
 
@@ -87,17 +89,14 @@ class ProductRepositoryTest {
     @Test
     @DisplayName("특정 브랜드의 상품 조회 테스트")
     void testFindByBrandNameAndDeletedDateIsNull() {
-        // Given
         List<Product> mockProducts = List.of(
                 createProduct(mockBrand, "A", 50000L),
                 createProduct(mockBrand, "A", 70000L)
         );
-        Mockito.when(productRepository.findByBrandNameAndDeletedDateIsNull("Brand1")).thenReturn(mockProducts);
+        when(productRepository.findByBrandNameAndDeletedDateIsNull("Brand1")).thenReturn(mockProducts);
 
-        // When
         List<Product> result = productRepository.findByBrandNameAndDeletedDateIsNull("Brand1");
 
-        // Then
         assertNotNull(result);
         assertEquals(2, result.size());
 
@@ -119,7 +118,7 @@ class ProductRepositoryTest {
         List<Product> mockProducts = List.of(
                 createProduct(mockBrand, "상의", 50000L)
         );
-        Mockito.when(productRepository.findLowestPriceProductsByCategory("상의")).thenReturn(mockProducts);
+        when(productRepository.findLowestPriceProductsByCategory("상의")).thenReturn(mockProducts);
 
         // When
         List<Product> result = productRepository.findLowestPriceProductsByCategory("상의");
@@ -138,16 +137,16 @@ class ProductRepositoryTest {
     @Test
     @DisplayName("카테고리별 최고가 상품 조회 테스트")
     void testFindHighestPriceProductsByCategory() {
-        // Given
+        // given
         List<Product> mockProducts = List.of(
                 createProduct(mockBrand, "아우터", 100000L)
         );
-        Mockito.when(productRepository.findHighestPriceProductsByCategory("아우터")).thenReturn(mockProducts);
+        // when
+        when(productRepository.findHighestPriceProductsByCategory("아우터")).thenReturn(mockProducts);
 
-        // When
         List<Product> result = productRepository.findHighestPriceProductsByCategory("아우터");
 
-        // Then
+        // then
         assertNotNull(result);
         assertEquals(1, result.size());
 

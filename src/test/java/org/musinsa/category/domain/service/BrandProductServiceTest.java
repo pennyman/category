@@ -143,6 +143,7 @@ class BrandProductServiceTest {
         existingProduct.setVersion(1L);
         existingBrand.addProduct(existingProduct);
 
+        // when
         when(brandRepository.findById(1L)).thenReturn(Optional.of(existingBrand));
 
         BrandDto brandDto = new BrandDto();
@@ -151,10 +152,9 @@ class BrandProductServiceTest {
         BrandProductRequestDto requestDto = new BrandProductRequestDto();
         requestDto.setBrand(brandDto);
 
-        // Act
         ApiResponseDto response = brandProductService.deleteBrandAndProducts(requestDto);
 
-        // Assert
+        // then
         assertTrue(response.isSuccess());
         assertEquals("Brand and products deleted successfully", response.getMessage());
 

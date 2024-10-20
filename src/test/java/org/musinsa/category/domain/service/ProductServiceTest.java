@@ -37,17 +37,17 @@ class ProductServiceTest {
 
     @Test
     void testGetLowestPriceByCategory() {
-        // Arrange
+        // given
         List<Object[]> mockResult = Arrays.asList(
                 new Object[]{"상의", "BrandA", 10000L},
                 new Object[]{"바지", "BrandB", 20000L}
         );
+        // when
         when(productRepository.findLowestPriceByCategory()).thenReturn(mockResult);
 
-        // Act
         LowestPriceInfoDto result = productService.getLowestPriceByCategory();
 
-        // Assert
+        // then
         assertNotNull(result);
         assertEquals(2, result.getCategories().size());
         assertEquals(30000L, result.getTotalPrice());
@@ -75,10 +75,10 @@ class ProductServiceTest {
         product2.setPrice(20000L);
         product2.setBrand(brand);
 
+        // when
         when(productRepository.findByBrandNameAndDeletedDateIsNull("BrandA"))
                 .thenReturn(Arrays.asList(product1, product2));
 
-        // when
         Map<String, Object> result = productService.getLowestPriceBrandInfo();
 
         // then
@@ -110,12 +110,12 @@ class ProductServiceTest {
         highestProduct.setPrice(20000L);
         highestProduct.setBrand(brandB);
 
+        // when
         when(productRepository.findLowestPriceProductsByCategory("상의"))
                 .thenReturn(Arrays.asList(lowestProduct));
         when(productRepository.findHighestPriceProductsByCategory("상의"))
                 .thenReturn(Arrays.asList(highestProduct));
 
-        // when
         Map<String, Object> result = productService.getCategoryPriceInfo("상의");
 
         // then
@@ -133,10 +133,8 @@ class ProductServiceTest {
 
     @Test
     void testGetLowestPriceByCategory_ExceptionHandling() {
-        // given
         when(productRepository.findLowestPriceByCategory()).thenThrow(new RuntimeException("Database error"));
 
-        // then
         assertThrows(CustomException.class, () -> productService.getLowestPriceByCategory());
     }
 
