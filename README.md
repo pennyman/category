@@ -1,4 +1,4 @@
-# MUSINSA Category API
+# MUSINSA CATEGORY API
 
 무신사 카테고리 관련 API 서버입니다.
 
