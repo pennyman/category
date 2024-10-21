@@ -1,6 +1,7 @@
 package org.musinsa.category.domain.service;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -27,11 +28,17 @@ public class ProductService {
 
     public LowestPriceInfoDto getLowestPriceByCategory() {
         try {
-            List<CategoryPriceDto> categoryPriceList = productRepository.findLowestPriceByCategory().stream()
+            List<Object[]> results = productRepository.findLowestPriceByCategory();
+
+            if (results.isEmpty()) {
+                return new LowestPriceInfoDto(Collections.emptyList(), 0L);
+            }
+
+            List<CategoryPriceDto> categoryPriceList = results.stream()
                     .map(result -> new CategoryPriceDto(
-                            (String) result[0],  // category
-                            (String) result[1],  // brand
-                            ((Number) result[2]).longValue()  // price
+                            (String) result[0],
+                            (String) result[1],
+                            ((Number) result[2]).longValue()
                     ))
                     .toList();
 
@@ -47,13 +54,17 @@ public class ProductService {
                     sortedCategoryPriceList.stream().mapToLong(CategoryPriceDto::getPrice).sum()
             );
         } catch (Exception e) {
-            throw new CustomException("PRODUCT_ADD_FAILED", "Failed to add product: " + e.getMessage());
+            throw new CustomException("PRODUCT_RETRIEVAL_FAILED", "Failed to retrieve lowest price by category: " + e.getMessage());
         }
     }
 
     public Map<String, Object> getLowestPriceBrandInfo() {
         try {
             List<Object[]> result = productRepository.findBrandWithLowestTotalPrice();
+
+            if (result.isEmpty()) {
+                throw new CustomException("PRODUCT_RETRIEVAL_FAILED", "No brand found with the lowest total price");
+            }
 
             String lowestPriceBrand = (String) result.get(0)[0];
             Long totalPrice = (Long) result.get(0)[1];
@@ -62,7 +73,7 @@ public class ProductService {
 
             return createLowestPriceResponse(lowestPriceBrand, products, totalPrice);
         } catch (Exception e) {
-            throw new CustomException("PRODUCT_ADD_FAILED", "Failed to add product: " + e.getMessage());
+            throw new CustomException("PRODUCT_RETRIEVAL_FAILED", "Failed to add product in getLowestPriceBrandInfo method: " + e.getMessage());
         }
     }
 
@@ -105,7 +116,7 @@ public class ProductService {
 
             return result;
         } catch (Exception e) {
-            throw new CustomException("PRODUCT_ADD_FAILED", "Failed to add product: " + e.getMessage());
+            throw new CustomException("PRODUCT_RETRIEVAL_FAILED", "Failed to retrieve category price info in getCategoryPriceInfo method: " + e.getMessage());
         }
     }
 

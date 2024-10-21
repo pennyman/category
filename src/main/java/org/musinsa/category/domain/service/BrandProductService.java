@@ -25,6 +25,10 @@ public class BrandProductService {
     @Transactional
     public ApiResponseDto addBrandAndProducts(BrandProductRequestDto request) {
         try {
+            if (request.getBrand() == null || request.getBrand().getName() == null || request.getProducts() == null || request.getProducts().isEmpty()) {
+                return new ApiResponseDto(false, "Failed to add brand and products: Product list is empty");
+            }
+
             Brand brand = new Brand();
             brand.setName(request.getBrand().getName());
             LocalDateTime now = LocalDateTime.now();

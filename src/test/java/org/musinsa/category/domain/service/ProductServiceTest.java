@@ -4,10 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -112,9 +114,9 @@ class ProductServiceTest {
 
         // when
         when(productRepository.findLowestPriceProductsByCategory("상의"))
-                .thenReturn(Arrays.asList(lowestProduct));
+                .thenReturn(List.of(lowestProduct));
         when(productRepository.findHighestPriceProductsByCategory("상의"))
-                .thenReturn(Arrays.asList(highestProduct));
+                .thenReturn(List.of(highestProduct));
 
         Map<String, Object> result = productService.getCategoryPriceInfo("상의");
 
@@ -136,6 +138,94 @@ class ProductServiceTest {
         when(productRepository.findLowestPriceByCategory()).thenThrow(new RuntimeException("Database error"));
 
         assertThrows(CustomException.class, () -> productService.getLowestPriceByCategory());
+    }
+
+    @Test
+    void testGetLowestPriceByCategory_EmptyResult() {
+        // given
+        when(productRepository.findLowestPriceByCategory()).thenReturn(Collections.emptyList());
+
+        // when
+        LowestPriceInfoDto result = productService.getLowestPriceByCategory();
+
+        // then
+        assertNotNull(result, "결과 객체는 null이 아니어야 합니다.");
+        assertTrue(result.getCategories().isEmpty(), "카테고리 리스트가 비어있어야 합니다.");
+        assertEquals(0L, result.getTotalPrice(), "총 가격은 0이어야 합니다.");
+    }
+
+    @Test
+    void testGetLowestPriceBrandInfo_EmptyResult() {
+        // given
+        when(productRepository.findBrandWithLowestTotalPrice()).thenReturn(Collections.emptyList());
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class,
+                () -> productService.getLowestPriceBrandInfo());
+
+        assertEquals("PRODUCT_RETRIEVAL_FAILED", exception.getErrorCode());
+        assertTrue(exception.getMessage().contains("Failed to add product in getLowestPriceBrandInfo method"));
+    }
+
+    @Test
+    void testGetCategoryPriceInfo_NonExistentCategory() {
+        // given
+        String nonExistentCategory = "NonExistentCategory";
+        when(productRepository.findLowestPriceProductsByCategory(nonExistentCategory))
+                .thenReturn(Collections.emptyList());
+        when(productRepository.findHighestPriceProductsByCategory(nonExistentCategory))
+                .thenReturn(Collections.emptyList());
+
+        // when
+        Map<String, Object> result = productService.getCategoryPriceInfo(nonExistentCategory);
+
+        // then
+        assertNotNull(result);
+        assertEquals(nonExistentCategory, result.get("카테고리"));
+        assertTrue(((List<?>) result.get("최저가")).isEmpty());
+        assertTrue(((List<?>) result.get("최고가")).isEmpty());
+    }
+
+    @Test
+    void testGetCategoryPriceInfo_EmptyCategory() {
+        // given
+        String emptyCategory = "";
+
+        // when
+        Map<String, Object> result = productService.getCategoryPriceInfo(emptyCategory);
+
+        // then
+        assertNotNull(result, "결과 객체는 null이 아니어야 합니다.");
+        assertEquals(emptyCategory, result.get("카테고리"), "카테고리는 빈 문자열이어야 합니다.");
+        assertTrue(((List<?>) result.get("최저가")).isEmpty(), "최저가 리스트가 비어있어야 합니다.");
+        assertTrue(((List<?>) result.get("최고가")).isEmpty(), "최고가 리스트가 비어있어야 합니다.");
+    }
+
+    @Test
+    void testGetLowestPriceByCategory_RepositoryException() {
+        // given
+        when(productRepository.findLowestPriceByCategory()).thenThrow(new RuntimeException("Database error"));
+
+        // when & then
+        assertThrows(CustomException.class, () -> productService.getLowestPriceByCategory());
+    }
+
+    @Test
+    void testGetLowestPriceBrandInfo_RepositoryException() {
+        // given
+        when(productRepository.findBrandWithLowestTotalPrice()).thenThrow(new RuntimeException("Database error"));
+
+        // when & then
+        assertThrows(CustomException.class, () -> productService.getLowestPriceBrandInfo());
+    }
+
+    @Test
+    void testGetCategoryPriceInfo_RepositoryException() {
+        // given
+        when(productRepository.findLowestPriceProductsByCategory(anyString())).thenThrow(new RuntimeException("Database error"));
+
+        // when & then
+        assertThrows(CustomException.class, () -> productService.getCategoryPriceInfo("상의"));
     }
 
 }

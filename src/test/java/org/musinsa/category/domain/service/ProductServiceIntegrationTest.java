@@ -1,8 +1,13 @@
 package org.musinsa.category.domain.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.musinsa.category.api.dto.LowestPriceInfoDto;
@@ -11,12 +16,10 @@ import org.musinsa.category.domain.entity.Brand;
 import org.musinsa.category.domain.entity.Product;
 import org.musinsa.category.domain.repository.BrandRepository;
 import org.musinsa.category.domain.repository.ProductRepository;
+import org.musinsa.category.exception.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
 
 @SpringBootTest
 @Transactional
@@ -111,5 +114,37 @@ class ProductServiceIntegrationTest {
         assertEquals("15,000", highestPrice.get(0).get("가격"));
     }
 
+    @Test
+    void 카테고리_데이터가_없을때_빈_결과_확인() {
+        productRepository.deleteAll();
+        brandRepository.deleteAll();
+
+        LowestPriceInfoDto result = productService.getLowestPriceByCategory();
+
+        assertNotNull(result, "결과 객체는 null이 아니어야 합니다.");
+        assertTrue(result.getCategories().isEmpty(), "카테고리 리스트가 비어있어야 합니다.");
+        assertEquals(0L, result.getTotalPrice(), "총 가격은 0이어야 합니다.");
+    }
+
+    @Test
+    void 최저가_브랜드_정보가_없을때_빈_결과_확인() {
+        productRepository.deleteAll();
+        brandRepository.deleteAll();
+
+        CustomException exception = assertThrows(CustomException.class,
+                () -> productService.getLowestPriceBrandInfo());
+
+        assertTrue(exception.getMessage().contains("Failed to add product in getLowestPriceBrandInfo method"));
+    }
+
+    @Test
+    void 존재하지_않는_카테고리_조회시_빈_결과_확인() {
+        Map<String, Object> result = productService.getCategoryPriceInfo("존재하지 않는 카테고리");
+
+        assertNotNull(result, "결과 객체는 null이 아니어야 합니다.");
+        assertEquals("존재하지 않는 카테고리", result.get("카테고리"), "요청한 카테고리 이름이 반환되어야 합니다.");
+        assertTrue(((List<?>) result.get("최저가")).isEmpty(), "최저가 리스트가 비어있어야 합니다.");
+        assertTrue(((List<?>) result.get("최고가")).isEmpty(), "최고가 리스트가 비어있어야 합니다.");
+    }
 
 }

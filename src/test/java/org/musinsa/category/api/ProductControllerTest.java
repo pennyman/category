@@ -1,6 +1,7 @@
 package org.musinsa.category.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.CREATED;
@@ -112,4 +113,80 @@ class ProductControllerTest {
         assertEquals(responseDto, response.getBody());
         verify(brandProductService).deleteBrandAndProducts(requestDto);
     }
+
+    @Test
+    void testGetLowestPriceByCategory_Success() {
+        LowestPriceInfoDto expectedDto = new LowestPriceInfoDto(List.of(new CategoryPriceDto("카테고리", "브랜드", 1000L)), 1000L);
+        when(productService.getLowestPriceByCategory()).thenReturn(expectedDto);
+
+        LowestPriceInfoDto result = productController.getLowestPriceByCategory();
+
+        assertEquals(expectedDto, result);
+        verify(productService).getLowestPriceByCategory();
+    }
+
+    @Test
+    void testGetLowestPriceByCategory_Failure() {
+        when(productService.getLowestPriceByCategory()).thenThrow(new RuntimeException("서비스 오류"));
+
+        assertThrows(RuntimeException.class, () -> productController.getLowestPriceByCategory());
+        verify(productService).getLowestPriceByCategory();
+    }
+
+    @Test
+    void testGetLowestPriceBrandInfo_Failure() {
+        when(productService.getLowestPriceBrandInfo()).thenThrow(new RuntimeException("서비스 오류"));
+
+        assertThrows(RuntimeException.class, () -> productController.getLowestPriceBrandInfo());
+        verify(productService).getLowestPriceBrandInfo();
+    }
+
+    @Test
+    void testGetCategoryPriceInfo_Failure() {
+        String category = "테스트카테고리";
+        when(productService.getCategoryPriceInfo(category)).thenThrow(new RuntimeException("서비스 오류"));
+
+        assertThrows(RuntimeException.class, () -> productController.getCategoryPriceInfo(category));
+        verify(productService).getCategoryPriceInfo(category);
+    }
+
+    @Test
+    void testAddBrandAndProducts_Failure() {
+        BrandProductRequestDto requestDto = new BrandProductRequestDto();
+        ApiResponseDto responseDto = new ApiResponseDto(false, "실패");
+        when(brandProductService.addBrandAndProducts(requestDto)).thenReturn(responseDto);
+
+        ResponseEntity<ApiResponseDto> response = productController.addBrandAndProducts(requestDto);
+
+        assertEquals(CREATED, response.getStatusCode());
+        assertEquals(responseDto, response.getBody());
+        verify(brandProductService).addBrandAndProducts(requestDto);
+    }
+
+    @Test
+    void testUpdateBrandAndProducts_Failure() {
+        BrandProductRequestDto requestDto = new BrandProductRequestDto();
+        ApiResponseDto responseDto = new ApiResponseDto(false, "실패");
+        when(brandProductService.updateBrandAndProducts(requestDto)).thenReturn(responseDto);
+
+        ResponseEntity<ApiResponseDto> response = productController.updateBrandAndProducts(requestDto);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(responseDto, response.getBody());
+        verify(brandProductService).updateBrandAndProducts(requestDto);
+    }
+
+    @Test
+    void testDeleteBrandAndProducts_Failure() {
+        BrandProductRequestDto requestDto = new BrandProductRequestDto();
+        ApiResponseDto responseDto = new ApiResponseDto(false, "실패");
+        when(brandProductService.deleteBrandAndProducts(requestDto)).thenReturn(responseDto);
+
+        ResponseEntity<ApiResponseDto> response = productController.deleteBrandAndProducts(requestDto);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(responseDto, response.getBody());
+        verify(brandProductService).deleteBrandAndProducts(requestDto);
+    }
+
 }

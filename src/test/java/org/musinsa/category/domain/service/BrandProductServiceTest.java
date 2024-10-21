@@ -5,11 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -191,4 +193,106 @@ class BrandProductServiceTest {
         assertTrue(response.getMessage().contains("Failed to add brand and products"));
         verify(brandRepository, times(1)).save(any(Brand.class));
     }
+
+    @Test
+    void testAddBrandAndProducts_NullBrandName() {
+        BrandDto brandDto = new BrandDto();
+        brandDto.setId(1L);
+        brandDto.setName(null);
+
+        requestDto.setBrand(brandDto);
+
+        ApiResponseDto response = brandProductService.addBrandAndProducts(requestDto);
+
+        assertFalse(response.isSuccess());
+        assertTrue(response.getMessage().contains("Failed to add brand and products"));
+        verify(brandRepository, never()).save(any(Brand.class));
+    }
+
+    @Test
+    void testAddBrandAndProducts_EmptyProductList() {
+        BrandDto brandDto = new BrandDto();
+        brandDto.setId(1L);
+        brandDto.setName("Test Brand");
+
+        requestDto.setBrand(brandDto);
+        requestDto.setProducts(Collections.emptyList());
+
+        ApiResponseDto response = brandProductService.addBrandAndProducts(requestDto);
+
+        assertFalse(response.isSuccess());
+        assertTrue(response.getMessage().contains("Failed to add brand and products"));
+        verify(brandRepository, never()).save(any(Brand.class));
+    }
+
+    @Test
+    void testUpdateBrandAndProducts_NullProductCategory() {
+        when(brandRepository.findById(1L)).thenReturn(Optional.of(brand));
+
+        ProductDto productDto = new ProductDto();
+        productDto.setId(1L);
+        productDto.setCategory(null);
+        productDto.setPrice(1000L);
+
+        requestDto.setProducts(List.of(productDto));
+
+        ApiResponseDto response = brandProductService.updateBrandAndProducts(requestDto);
+
+        assertFalse(response.isSuccess());
+        assertTrue(response.getMessage().contains("Failed to update brand and products"));
+    }
+
+    @Test
+    void testUpdateBrandAndProducts_NegativePrice() {
+        when(brandRepository.findById(1L)).thenReturn(Optional.of(brand));
+
+        ProductDto productDto = new ProductDto();
+        productDto.setId(1L);
+        productDto.setCategory("Test Category");
+        productDto.setPrice(-1000L);
+
+        requestDto.setProducts(List.of(productDto));
+
+        ApiResponseDto response = brandProductService.updateBrandAndProducts(requestDto);
+
+        assertFalse(response.isSuccess());
+        assertTrue(response.getMessage().contains("Failed to update brand and products"));
+    }
+
+    @Test
+    void testDeleteBrandAndProducts_ConcurrentModification() {
+        Brand existingBrand = new Brand();
+        existingBrand.setId(1L);
+        existingBrand.setName("Existing Brand");
+        existingBrand.setVersion(1L);
+
+        Product existingProduct = new Product();
+        existingProduct.setId(1L);
+        existingProduct.setCategory("Existing Category");
+        existingProduct.setPrice(500L);
+        existingProduct.setVersion(1L);
+        existingBrand.addProduct(existingProduct);
+
+        when(brandRepository.findById(1L)).thenReturn(Optional.of(existingBrand));
+
+        BrandDto brandDto = new BrandDto();
+        brandDto.setId(1L);
+        requestDto.setBrand(brandDto);
+
+        ApiResponseDto response = brandProductService.deleteBrandAndProducts(requestDto);
+
+        assertTrue(response.isSuccess());
+        assertEquals("Brand and products deleted successfully", response.getMessage());
+        verify(brandRepository, times(1)).findById(1L);
+
+        assertNotNull(existingBrand.getDeletedDate());
+        assertNotNull(existingBrand.getLastModifiedDate());
+        assertEquals(2L, existingBrand.getVersion());
+
+        Product deletedProduct = existingBrand.getProducts().get(0);
+        assertNotNull(deletedProduct.getDeletedDate());
+        assertNotNull(deletedProduct.getLastModifiedDate());
+        assertEquals(2L, deletedProduct.getVersion());
+    }
+
 }

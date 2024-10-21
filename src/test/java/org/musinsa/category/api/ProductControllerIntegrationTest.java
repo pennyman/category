@@ -1,6 +1,18 @@
 package org.musinsa.category.api;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.musinsa.category.api.dto.ApiResponseDto;
@@ -11,22 +23,13 @@ import org.musinsa.category.domain.dto.CategoryPriceDto;
 import org.musinsa.category.domain.dto.ProductDto;
 import org.musinsa.category.domain.service.BrandProductService;
 import org.musinsa.category.domain.service.ProductService;
+import org.musinsa.category.exception.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -82,6 +85,20 @@ class ProductControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("단일 브랜드 최저가 상품 조회 실패 테스트")
+    void testGetLowestPriceBrandInfoFailure() throws Exception {
+        // Given
+        when(productService.getLowestPriceBrandInfo()).thenThrow(new CustomException("PRODUCT_RETRIEVAL_FAILED", "Failed to retrieve lowest price brand info"));
+
+        // When & Then
+        mockMvc.perform(get("/product/v1/brand/lowest-price")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.errorCode").value("PRODUCT_RETRIEVAL_FAILED"))
+                .andExpect(jsonPath("$.error.errorMessage").value("Failed to retrieve lowest price brand info"));
+    }
+
+    @Test
     @DisplayName("카테고리별 최저 및 최고 가격 상품 조회 테스트")
     void testGetCategoryPriceInfo() throws Exception {
         // Given
@@ -98,6 +115,20 @@ class ProductControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.lowestPrice").value(10000L))
                 .andExpect(jsonPath("$.highestPrice").value(50000L));
+    }
+
+    @Test
+    @DisplayName("카테고리별 최저가 상품 조회 실패 테스트")
+    void testGetLowestPriceByCategoryFailure() throws Exception {
+        // Given
+        when(productService.getLowestPriceByCategory()).thenThrow(new CustomException("PRODUCT_RETRIEVAL_FAILED", "Failed to retrieve lowest price by category"));
+
+        // When & Then
+        mockMvc.perform(get("/product/v1/lowest-price")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.errorCode").value("PRODUCT_RETRIEVAL_FAILED"))
+                .andExpect(jsonPath("$.error.errorMessage").value("Failed to retrieve lowest price by category"));
     }
 
     @Test
@@ -162,4 +193,5 @@ class ProductControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Brand and products deleted successfully"));
     }
+
 }
