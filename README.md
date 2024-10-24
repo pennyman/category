@@ -1,6 +1,6 @@
-# MUSINSA CATEGORY API
+# CATEGORY API
 
-무신사 카테고리 관련 API 서버입니다.
+카테고리 관련 API 서버입니다.
 
 ## 구현 범위
 
